@@ -1,3 +1,4 @@
+using System.Net.Http;
 using dotnet.Common.MongoDB;
 using dotnet.Inventory.Service.Clients;
 using dotnet.Inventory.Service.Entities;
@@ -7,6 +8,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
+using Polly;
 
 namespace dotnet.Inventory.Service
 {
@@ -27,7 +29,10 @@ namespace dotnet.Inventory.Service
             services.AddHttpClient<CatalogClient>(client =>
             {
                 client.BaseAddress = new System.Uri("https://localhost:5001");
-            });
+            })
+            // Implementing a timeout policy via Polly
+            .AddPolicyHandler(Policy.TimeoutAsync<HttpResponseMessage>(1));
+
 
             services.AddControllers();
             services.AddSwaggerGen(c =>
