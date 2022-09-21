@@ -1,3 +1,4 @@
+using System;
 using System.Net.Http;
 using dotnet.Common.MongoDB;
 using dotnet.Inventory.Service.Clients;
@@ -7,8 +8,10 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
 using Polly;
+using Polly.Timeout;
 
 namespace dotnet.Inventory.Service
 {
@@ -26,10 +29,26 @@ namespace dotnet.Inventory.Service
         {
             services.AddMongo().AddMongoRepository<InventoryItem>("inventoryitems");
 
+            Random jit = new Random();
+
             services.AddHttpClient<CatalogClient>(client =>
             {
                 client.BaseAddress = new System.Uri("https://localhost:5001");
             })
+            //Implementing retries with exponential backoff
+            .AddTransientHttpErrorPolicy(builder => builder.Or<TimeoutRejectedException>().WaitAndRetryAsync(
+                5,
+                retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt))
+                                + TimeSpan.FromMilliseconds(jit.Next(0, 1000)),
+                //Development mode
+                onRetry: (outcome, timespan, retryAttempt) =>
+                {
+                    var serviceProvider = services.BuildServiceProvider();
+                    serviceProvider.GetService<ILogger<CatalogClient>>()?
+                    .LogWarning($"Delaying for {timespan.TotalSeconds} seconds, then making attempt {retryAttempt}");
+                }
+            ))
+
             // Implementing a timeout policy via Polly
             .AddPolicyHandler(Policy.TimeoutAsync<HttpResponseMessage>(1));
 
