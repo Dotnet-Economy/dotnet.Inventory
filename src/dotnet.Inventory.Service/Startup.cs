@@ -1,8 +1,10 @@
 using System;
 using System.Net.Http;
+using dotnet.Common.MassTransit;
 using dotnet.Common.MongoDB;
 using dotnet.Inventory.Service.Clients;
 using dotnet.Inventory.Service.Entities;
+using MassTransit;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -27,31 +29,12 @@ namespace dotnet.Inventory.Service
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddMongo().AddMongoRepository<InventoryItem>("inventoryitems");
+            services.AddMongo()
+                    .AddMongoRepository<InventoryItem>("inventoryitems")
+                    .AddMongoRepository<CatalogItem>("catalogitems")
+                    .AddMassTransitWithRabbitMq();
 
-            Random jit = new Random();
-
-            services.AddHttpClient<CatalogClient>(client =>
-            {
-                client.BaseAddress = new System.Uri("https://localhost:5001");
-            })
-            //Implementing retries with exponential backoff
-            .AddTransientHttpErrorPolicy(builder => builder.Or<TimeoutRejectedException>().WaitAndRetryAsync(
-                5,
-                retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt))
-                                + TimeSpan.FromMilliseconds(jit.Next(0, 1000)),
-                //Development mode
-                onRetry: (outcome, timespan, retryAttempt) =>
-                {
-                    var serviceProvider = services.BuildServiceProvider();
-                    serviceProvider.GetService<ILogger<CatalogClient>>()?
-                    .LogWarning($"Delaying for {timespan.TotalSeconds} seconds, then making attempt {retryAttempt}");
-                }
-            ))
-
-            // Implementing a timeout policy via Polly
-            .AddPolicyHandler(Policy.TimeoutAsync<HttpResponseMessage>(1));
-
+            AddCatalogClient(services);
 
             services.AddControllers();
             services.AddSwaggerGen(c =>
@@ -59,6 +42,7 @@ namespace dotnet.Inventory.Service
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "dotnet.Inventory.Service", Version = "v1" });
             });
         }
+
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
@@ -81,5 +65,52 @@ namespace dotnet.Inventory.Service
                 endpoints.MapControllers();
             });
         }
+
+        private static void AddCatalogClient(IServiceCollection services)
+        {
+            Random jit = new Random();
+
+            services.AddHttpClient<CatalogClient>(client =>
+            {
+                client.BaseAddress = new System.Uri("https://localhost:5001");
+            })
+            //Implementing retries with exponential backoff
+            .AddTransientHttpErrorPolicy(builder => builder.Or<TimeoutRejectedException>().WaitAndRetryAsync(
+                5,
+                retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt))
+                                + TimeSpan.FromMilliseconds(jit.Next(0, 1000)),
+                //Development mode
+                onRetry: (outcome, timespan, retryAttempt) =>
+                {
+                    var serviceProvider = services.BuildServiceProvider();
+                    serviceProvider.GetService<ILogger<CatalogClient>>()?
+                    .LogWarning($"Delaying for {timespan.TotalSeconds} seconds, then making attempt {retryAttempt}");
+                }
+            ))
+            //Implementing the circuit breaker pattern
+            .AddTransientHttpErrorPolicy(builder => builder.Or<TimeoutRejectedException>().CircuitBreakerAsync(
+                3,
+                TimeSpan.FromSeconds(15),
+                onBreak: (outCome, timespan) =>
+                {
+                    //Development mode
+                    var serviceProvider = services.BuildServiceProvider();
+                    serviceProvider.GetService<ILogger<CatalogClient>>()?
+                    .LogWarning($"Opening the circuit for {timespan.TotalSeconds} seconds...");
+
+                },
+                onReset: () =>
+                {
+                    var serviceProvider = services.BuildServiceProvider();
+                    serviceProvider.GetService<ILogger<CatalogClient>>()?
+                    .LogWarning("Closing the circuit...");
+
+                }
+                ))
+
+            // Implementing a timeout policy via Polly
+            .AddPolicyHandler(Policy.TimeoutAsync<HttpResponseMessage>(1));
+        }
+
     }
 }
