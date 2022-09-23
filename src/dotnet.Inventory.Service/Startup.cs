@@ -1,5 +1,6 @@
 using System;
 using System.Net.Http;
+using dotnet.Common.Identity;
 using dotnet.Common.MassTransit;
 using dotnet.Common.MongoDB;
 using dotnet.Inventory.Service.Clients;
@@ -33,7 +34,8 @@ namespace dotnet.Inventory.Service
             services.AddMongo()
                     .AddMongoRepository<InventoryItem>("inventoryitems")
                     .AddMongoRepository<CatalogItem>("catalogitems")
-                    .AddMassTransitWithRabbitMq();
+                    .AddMassTransitWithRabbitMq()
+                    .AddJwtBearerAuthentication();
 
             AddCatalogClient(services);
 
@@ -67,6 +69,7 @@ namespace dotnet.Inventory.Service
 
             app.UseRouting();
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>

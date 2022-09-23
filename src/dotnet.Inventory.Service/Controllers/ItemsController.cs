@@ -6,12 +6,14 @@ using dotnet.Common;
 using dotnet.Inventory.Service.Clients;
 using dotnet.Inventory.Service.Dtos;
 using dotnet.Inventory.Service.Entities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace dotnet.Inventory.Service.Controllers
 {
     [ApiController]
     [Route("items")]
+    [Authorize]
     public class ItemsController : ControllerBase
     {
         private readonly IRepository<InventoryItem> inventoryItemsRepository;
