@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using dotnet.Common;
 using dotnet.Inventory.Service.Clients;
@@ -13,9 +15,9 @@ namespace dotnet.Inventory.Service.Controllers
 {
     [ApiController]
     [Route("items")]
-    [Authorize]
     public class ItemsController : ControllerBase
     {
+        private const string AdminRole = "Admin";
         private readonly IRepository<InventoryItem> inventoryItemsRepository;
         private readonly IRepository<CatalogItem> catalogItemsRepository;
         public ItemsController(IRepository<InventoryItem> inventoryItemsRepository, IRepository<CatalogItem> catalogItemsRepository)
@@ -25,9 +27,18 @@ namespace dotnet.Inventory.Service.Controllers
         }
 
         [HttpGet]
+        [Authorize]
         public async Task<ActionResult<IEnumerable<InventoryItemDto>>> GetAsync(Guid userId)
         {
+
             if (userId == Guid.Empty) return BadRequest();
+            //"sub" claim always contains user id
+            var currentUserId = User.FindFirstValue(JwtRegisteredClaimNames.Sub);
+
+            if (Guid.Parse(currentUserId) != userId)
+            {
+                if (!User.IsInRole(AdminRole)) return Forbid();
+            }
 
             var inventoryItemEntities = await inventoryItemsRepository.GetAllAsync(item => item.UserId == userId);
             var itemIds = inventoryItemEntities.Select(item => item.CatalogItemId);
@@ -43,6 +54,7 @@ namespace dotnet.Inventory.Service.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = AdminRole)]
         public async Task<ActionResult> PostAsync(GrantItemsDto grantItemsDto)
         {
             var inventoryItem = await inventoryItemsRepository.GetAsync(item => item.UserId == grantItemsDto.UserId
