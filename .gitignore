@@ -1,7 +1,8 @@
-# User-specific files
+# User-specific direcory and files
 *.suo
 *.user
 *.sln.docstates
+dotnet.Inventory.Contracts/
 
 # Build results
 [Dd]ebug/

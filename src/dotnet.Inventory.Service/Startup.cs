@@ -5,6 +5,8 @@ using dotnet.Common.MassTransit;
 using dotnet.Common.MongoDB;
 using dotnet.Inventory.Service.Clients;
 using dotnet.Inventory.Service.Entities;
+using dotnet.Inventory.Service.Exceptions;
+using GreenPipes;
 using MassTransit;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -34,7 +36,11 @@ namespace dotnet.Inventory.Service
             services.AddMongo()
                     .AddMongoRepository<InventoryItem>("inventoryitems")
                     .AddMongoRepository<CatalogItem>("catalogitems")
-                    .AddMassTransitWithRabbitMq()
+                    .AddMassTransitWithRabbitMq(retryConfiurator =>
+                    {
+                        retryConfiurator.Interval(3, TimeSpan.FromSeconds(5));
+                        retryConfiurator.Ignore(typeof(UnknownItemException));
+                    })
                     .AddJwtBearerAuthentication();
 
             AddCatalogClient(services);
