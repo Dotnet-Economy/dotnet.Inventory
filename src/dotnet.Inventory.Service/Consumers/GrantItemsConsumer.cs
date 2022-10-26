@@ -34,15 +34,30 @@ namespace dotnet.Inventory.Service.Consumers
                     Quantity = message.Quantity,
                     AcquireDate = DateTimeOffset.UtcNow
                 };
+                inventoryItem.MessageIds.Add(context.MessageId.Value);
                 await inventoryItemsRepository.CreateAsync(inventoryItem);
             }
             else
             {
+                if (inventoryItem.MessageIds.Contains(context.MessageId.Value))
+                {
+                    await context.Publish(new InventoryItemsGranted(message.CorrelationId));
+                    return;
+                }
                 inventoryItem.Quantity += message.Quantity;
+                inventoryItem.MessageIds.Add(context.MessageId.Value);
+
                 await inventoryItemsRepository.UpdateAsync(inventoryItem);
             }
 
-            await context.Publish(new InventoryItemsGranted(message.CorrelationId));
+            var itemsGrantedTask = context.Publish(new InventoryItemsGranted(message.CorrelationId));
+            var inventoryUpdatedTask = context.Publish(new InventoryItemUpdated(
+                inventoryItem.UserId,
+                inventoryItem.CatalogItemId,
+                inventoryItem.Quantity
+            ));
+
+            await Task.WhenAll(inventoryUpdatedTask, itemsGrantedTask);
         }
     }
 }

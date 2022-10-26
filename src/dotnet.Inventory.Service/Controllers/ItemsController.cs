@@ -5,9 +5,11 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using dotnet.Common;
+using dotnet.Inventory.Contracts;
 using dotnet.Inventory.Service.Clients;
 using dotnet.Inventory.Service.Dtos;
 using dotnet.Inventory.Service.Entities;
+using MassTransit;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -20,10 +22,12 @@ namespace dotnet.Inventory.Service.Controllers
         private const string AdminRole = "Admin";
         private readonly IRepository<InventoryItem> inventoryItemsRepository;
         private readonly IRepository<CatalogItem> catalogItemsRepository;
-        public ItemsController(IRepository<InventoryItem> inventoryItemsRepository, IRepository<CatalogItem> catalogItemsRepository)
+        private readonly IPublishEndpoint publishEndpoint;
+        public ItemsController(IRepository<InventoryItem> inventoryItemsRepository, IRepository<CatalogItem> catalogItemsRepository, IPublishEndpoint publishEndpoint)
         {
             this.inventoryItemsRepository = inventoryItemsRepository;
             this.catalogItemsRepository = catalogItemsRepository;
+            this.publishEndpoint = publishEndpoint;
         }
 
         [HttpGet]
@@ -75,6 +79,13 @@ namespace dotnet.Inventory.Service.Controllers
                 inventoryItem.Quantity += grantItemsDto.Quantity;
                 await inventoryItemsRepository.UpdateAsync(inventoryItem);
             }
+
+            await publishEndpoint.Publish(new InventoryItemUpdated(
+                inventoryItem.UserId,
+                inventoryItem.CatalogItemId,
+                inventoryItem.Quantity
+                ));
+
             return Ok();
         }
 

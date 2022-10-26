@@ -18,7 +18,7 @@ namespace dotnet.Inventory.Service.Clients
         [HttpGet]
         public async Task<IReadOnlyCollection<CatalogItemDto>> GetCatalogItemsAsync()
         {
-            var items = await httpClient.GetFromJsonAsync<IReadOnlyCollection<CatalogItemDto>>("items");
+            var items = await httpClient.GetFromJsonAsync<IReadOnlyCollection<CatalogItemDto>>("/items");
             return items;
         }
     }
