@@ -36,7 +36,7 @@ namespace dotnet.Inventory.Service
             services.AddMongo()
                     .AddMongoRepository<InventoryItem>("inventoryitems")
                     .AddMongoRepository<CatalogItem>("catalogitems")
-                    .AddMassTransitWithRabbitMq(retryConfiurator =>
+                    .AddMassTransitWithMessageBroker(Configuration, retryConfiurator =>
                     {
                         retryConfiurator.Interval(3, TimeSpan.FromSeconds(5));
                         retryConfiurator.Ignore(typeof(UnknownItemException));
