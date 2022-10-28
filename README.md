@@ -5,7 +5,7 @@ Dotnet Economy Inventory microservice
 ## Create and publish package
 
 ```powershell
-$version="1.0.3"
+$version="1.0.4"
 $owner="Dotnet-Economy"
 $gh_pat="[PAT HERE]"
 
