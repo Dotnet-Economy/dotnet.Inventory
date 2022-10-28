@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+    <PackageDescription>Inventory library used by Dotnet Economy microservices</PackageDescription>
+    <Authors>Adokeme Tamara</Authors>
+    <Company>.NET Microservices</Company>
+  </PropertyGroup>
+
+</Project>
