@@ -1,5 +1,6 @@
 using System;
 using System.Net.Http;
+using dotnet.Common.HealthChecks;
 using dotnet.Common.Identity;
 using dotnet.Common.MassTransit;
 using dotnet.Common.MongoDB;
@@ -50,6 +51,9 @@ namespace dotnet.Inventory.Service
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "dotnet.Inventory.Service", Version = "v1" });
             });
+
+            services.AddHealthChecks()
+                    .AddMongoDb();
         }
 
 
@@ -81,6 +85,7 @@ namespace dotnet.Inventory.Service
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
+                endpoints.MapDotnetEconomyHealthChecks();
             });
         }
 
