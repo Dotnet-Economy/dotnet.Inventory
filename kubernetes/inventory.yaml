@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inventory-deployment
+spec:
+  selector:
+    matchLabels:
+      app: inventory
+  template:
+    metadata:
+      labels:
+        app: inventory
+        aadpodidbinding: inventory
+    spec:
+      containers:
+      - name: inventory
+        image: dotneteconomy.azurecr.io/dotnet.inventory:1.0.4
+        env:
+          - name: ServiceSettings__MessageBroker
+            value: SERVICEBUS
+          - name: ServiceSettings__KeyVaultName
+            value: dotneteconomy
+          - name: ServiceSettings__Authority
+            value: https://dotneteconomy.eastus.cloudapp.azure.com/identity-svc
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "150m"
+        ports:
+        - containerPort: 5002
+        livenessProbe:
+          httpGet:
+            port: 5002
+            path: /health/live
+          initialDelaySeconds: 10
+        readinessProbe:
+          httpGet:
+            port: 5002
+            path: /health/ready
+          initialDelaySeconds: 10
+        
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: inventory-service
+spec:
+  type: ClusterIP #Default type for Kubernetes
+  selector:
+    app: inventory
+  ports:
+  - port: 80
+    targetPort: 5002
