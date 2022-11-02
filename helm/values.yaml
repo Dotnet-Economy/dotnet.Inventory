@@ -1,0 +1,11 @@
+microserviceName: "inventory"
+
+image:
+  repository: dotneteconomy.azurecr.io/dotnet.inventory
+  tag: 1.0.4
+
+envVariables:
+  ServiceSettings__Authority: https://dotneteconomy.eastus.cloudapp.azure.com/identity-svc
+
+container:
+  port: 5002
