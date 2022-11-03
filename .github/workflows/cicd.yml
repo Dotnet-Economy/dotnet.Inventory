@@ -60,6 +60,10 @@ jobs:
       APP_NAME: dotneteconomy
       SERVICE_NAME: inventory
       HELM_CHART_VERSION: "0.1.0"
+      
+    permissions:
+      id-token: write
+      contents: read
 
     steps:
     - uses: actions/checkout@v3
