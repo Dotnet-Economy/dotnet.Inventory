@@ -8,7 +8,6 @@ using dotnet.Common.MongoDB;
 using dotnet.Inventory.Service.Clients;
 using dotnet.Inventory.Service.Entities;
 using dotnet.Inventory.Service.Exceptions;
-using GreenPipes;
 using MassTransit;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;

@@ -6,8 +6,8 @@
 
   <ItemGroup>
     <PackageReference Include="dotnet.Catalog.Contracts" Version="1.0.0" />
-    <PackageReference Include="dotnet.Common" Version="1.0.12" />
-    <PackageReference Include="microsoft.Extensions.Http.Polly" Version="6.0.9" />
+    <PackageReference Include="dotnet.Common" Version="1.0.13" />
+    <PackageReference Include="Microsoft.Extensions.Http.Polly" Version="6.0.9" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="5.6.3" />
   </ItemGroup>
 
