@@ -14,10 +14,11 @@ namespace dotnet.Inventory.Service.Consumers
         private readonly IRepository<InventoryItem> inventoryItemsRepository;
         private readonly IRepository<CatalogItem> catalogItemsRepository;
         private readonly ILogger<SubtractItems> logger;
-        public SubtractItemsConsumer(IRepository<InventoryItem> inventoryItemsRepository, IRepository<CatalogItem> catalogItemsRepository)
+        public SubtractItemsConsumer(IRepository<InventoryItem> inventoryItemsRepository, IRepository<CatalogItem> catalogItemsRepository, ILogger<SubtractItems> logger)
         {
             this.catalogItemsRepository = catalogItemsRepository;
             this.inventoryItemsRepository = inventoryItemsRepository;
+            this.logger = logger;
         }
 
         public async Task Consume(ConsumeContext<SubtractItems> context)
