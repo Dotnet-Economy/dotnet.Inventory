@@ -5,6 +5,7 @@ using dotnet.Common.Identity;
 using dotnet.Common.Logging;
 using dotnet.Common.MassTransit;
 using dotnet.Common.MongoDB;
+using dotnet.Common.OpenTelemetry;
 using dotnet.Inventory.Service.Clients;
 using dotnet.Inventory.Service.Entities;
 using dotnet.Inventory.Service.Exceptions;
@@ -55,7 +56,8 @@ namespace dotnet.Inventory.Service
             services.AddHealthChecks()
                     .AddMongoDb();
 
-            services.AddSeqLogging(Configuration);
+            services.AddSeqLogging(Configuration)
+                    .AddTracing(Configuration);
         }
 
 
