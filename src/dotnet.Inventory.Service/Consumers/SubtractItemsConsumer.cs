@@ -5,6 +5,7 @@ using dotnet.Inventory.Service.Entities;
 using dotnet.Inventory.Service.Exceptions;
 using MassTransit;
 using dotnet.Inventory.Contracts;
+using Microsoft.Extensions.Logging;
 
 namespace dotnet.Inventory.Service.Consumers
 {
@@ -12,6 +13,7 @@ namespace dotnet.Inventory.Service.Consumers
     {
         private readonly IRepository<InventoryItem> inventoryItemsRepository;
         private readonly IRepository<CatalogItem> catalogItemsRepository;
+        private readonly ILogger<SubtractItems> logger;
         public SubtractItemsConsumer(IRepository<InventoryItem> inventoryItemsRepository, IRepository<CatalogItem> catalogItemsRepository)
         {
             this.catalogItemsRepository = catalogItemsRepository;
@@ -25,6 +27,15 @@ namespace dotnet.Inventory.Service.Consumers
             if (item == null) throw new UnknownItemException(message.CatalogItemId);
             var inventoryItem = await inventoryItemsRepository.GetAsync(item => item.UserId == message.UserId
                                                                         && item.CatalogItemId == message.CatalogItemId);
+            
+            logger.LogInformation(
+                "Subtracting {Quantity} qty of Item:{CatalogItemId} from User:{UserId}. CorrelationId:{CorrelationId}",
+                message.Quantity,
+                message.CatalogItemId,
+                message.UserId,
+                context.Message.CorrelationId
+            );
+            
             if (inventoryItem != null)
             {
                 if (inventoryItem.MessageIds.Contains(context.MessageId.Value))

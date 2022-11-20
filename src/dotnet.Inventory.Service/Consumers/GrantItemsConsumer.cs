@@ -5,6 +5,7 @@ using dotnet.Inventory.Service.Entities;
 using dotnet.Inventory.Service.Exceptions;
 using MassTransit;
 using dotnet.Inventory.Contracts;
+using Microsoft.Extensions.Logging;
 
 namespace dotnet.Inventory.Service.Consumers
 {
@@ -12,10 +13,12 @@ namespace dotnet.Inventory.Service.Consumers
     {
         private readonly IRepository<InventoryItem> inventoryItemsRepository;
         private readonly IRepository<CatalogItem> catalogItemsRepository;
-        public GrantItemsConsumer(IRepository<InventoryItem> inventoryItemsRepository, IRepository<CatalogItem> catalogItemsRepository)
+        private readonly ILogger<GrantItemsConsumer> logger;
+        public GrantItemsConsumer(IRepository<InventoryItem> inventoryItemsRepository, IRepository<CatalogItem> catalogItemsRepository, ILogger<GrantItemsConsumer> logger)
         {
             this.catalogItemsRepository = catalogItemsRepository;
             this.inventoryItemsRepository = inventoryItemsRepository;
+            this.logger = logger;
         }
 
         public async Task Consume(ConsumeContext<GrantItems> context)
@@ -25,6 +28,14 @@ namespace dotnet.Inventory.Service.Consumers
             if (item == null) throw new UnknownItemException(message.CatalogItemId);
             var inventoryItem = await inventoryItemsRepository.GetAsync(item => item.UserId == message.UserId
                                                                         && item.CatalogItemId == message.CatalogItemId);
+
+            logger.LogInformation(
+                "Granting {Quantity} qty of Item:{CatalogItemId} to User:{UserId}. CorrelationId:{CorrelationId}",
+                message.Quantity,
+                message.CatalogItemId,
+                message.UserId,
+                context.Message.CorrelationId
+            );
             if (inventoryItem == null)
             {
                 inventoryItem = new InventoryItem

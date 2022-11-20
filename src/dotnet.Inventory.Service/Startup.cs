@@ -2,6 +2,7 @@ using System;
 using System.Net.Http;
 using dotnet.Common.HealthChecks;
 using dotnet.Common.Identity;
+using dotnet.Common.Logging;
 using dotnet.Common.MassTransit;
 using dotnet.Common.MongoDB;
 using dotnet.Inventory.Service.Clients;
@@ -54,6 +55,8 @@ namespace dotnet.Inventory.Service
 
             services.AddHealthChecks()
                     .AddMongoDb();
+
+            services.AddSeqLogging(Configuration);
         }
 
 

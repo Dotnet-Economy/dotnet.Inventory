@@ -1,3 +1,5 @@
+[![Inventory CICD](https://github.com/Dotnet-Economy/dotnet.Inventory/actions/workflows/cicd.yml/badge.svg)](https://github.com/Dotnet-Economy/dotnet.Inventory/actions/workflows/cicd.yml)
+
 # dotnet.Inventory
 
 Dotnet Economy Inventory microservice
