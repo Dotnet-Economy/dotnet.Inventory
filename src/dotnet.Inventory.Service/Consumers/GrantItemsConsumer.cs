@@ -6,6 +6,10 @@ using dotnet.Inventory.Service.Exceptions;
 using MassTransit;
 using dotnet.Inventory.Contracts;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics.Metrics;
+using Microsoft.Extensions.Configuration;
+using dotnet.Common.Settings;
+using System.Collections.Generic;
 
 namespace dotnet.Inventory.Service.Consumers
 {
@@ -14,11 +18,19 @@ namespace dotnet.Inventory.Service.Consumers
         private readonly IRepository<InventoryItem> inventoryItemsRepository;
         private readonly IRepository<CatalogItem> catalogItemsRepository;
         private readonly ILogger<GrantItemsConsumer> logger;
-        public GrantItemsConsumer(IRepository<InventoryItem> inventoryItemsRepository, IRepository<CatalogItem> catalogItemsRepository, ILogger<GrantItemsConsumer> logger)
+        private readonly Counter<int> itemGrantedCounter;
+        public GrantItemsConsumer(IRepository<InventoryItem> inventoryItemsRepository, 
+                                IRepository<CatalogItem> catalogItemsRepository, 
+                                ILogger<GrantItemsConsumer> logger,
+                                IConfiguration configuration)
         {
             this.catalogItemsRepository = catalogItemsRepository;
             this.inventoryItemsRepository = inventoryItemsRepository;
             this.logger = logger;
+
+            var settings = configuration.GetSection(nameof(ServiceSettings)).Get<ServiceSettings>();
+            Meter meter = new(settings.ServiceName);
+            itemGrantedCounter = meter.CreateCounter<int>("ItemGranted");
         }
 
         public async Task Consume(ConsumeContext<GrantItems> context)
@@ -67,6 +79,8 @@ namespace dotnet.Inventory.Service.Consumers
                 inventoryItem.CatalogItemId,
                 inventoryItem.Quantity
             ));
+
+            itemGrantedCounter.Add(1, new KeyValuePair<string, object>(nameof(message.CatalogItemId), message.CatalogItemId));
 
             await Task.WhenAll(inventoryUpdatedTask, itemsGrantedTask);
         }

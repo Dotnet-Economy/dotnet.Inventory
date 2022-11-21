@@ -57,7 +57,8 @@ namespace dotnet.Inventory.Service
                     .AddMongoDb();
 
             services.AddSeqLogging(Configuration)
-                    .AddTracing(Configuration);
+                    .AddTracing(Configuration)
+                    .AddMetrics(Configuration);
         }
 
 
@@ -79,6 +80,7 @@ namespace dotnet.Inventory.Service
 
             }
 
+            app.UseOpenTelemetryPrometheusScrapingEndpoint();
             app.UseHttpsRedirection();
 
             app.UseRouting();
